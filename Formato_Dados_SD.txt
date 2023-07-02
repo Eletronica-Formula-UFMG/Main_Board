@@ -1,0 +1,32 @@
+Aceleracao
+
+No caso de aquisicao nos eixos o acelerometro 1 sera dianteiro e o 2 traseiro
+Para o centro de massa aquisitar somente com o acelerometro 1
+ax1(G)	ay1(G)	az1(G)	ax2(G)	ay2(G)	az2(G)	vx1(rad/s)	vy1(rad/s)	vz1(rad/s)	vx2(rad/s)	vy2(rad/s)	vz2(rad/s)	millis
+dado	dado	dado	dado	dado	dado	dado		dado		dado		dado		dado		dado		tempo
+	
+
+ExtDiant1
+ExtDiant2
+ExtTras
+
+Ao fazer a montagem especificar qual canal corresponde a qual peca/ponto do carro
+Canal1	Canal2	Canal3	Canal4	millis
+Dado	Dado	Dado	Dado	tempo
+
+
+Temperatura(°C)
+
+Para disco de freio usar somente 4 sensores
+T1(DD)	T2(DE)	T3(TD)	T4(TE)	millis
+dado	dado	dado	dado	tempo
+
+Para banda de rolagem T1, T2, T3 em uma roda e T4, T5, T6 em outra
+T1	T2	T3	T4	T5	T6	millis
+dado	dado	dado	dado	dado	dado	tempo
+
+
+PDU
+
+Ibat	Ibomba	Ifan	TempBomba	TempFAN		Acionamentos	millis
+dado	dado	dado	dado		dado		dado		tempo
