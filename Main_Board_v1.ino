@@ -8,6 +8,11 @@
 
 #include <ESP32CAN.h>
 #include <CAN_config.h>
+#include <mySD.h>
+#include <Wire.h>
+#include <Arduino.h>
+
+ext::File root1;
 
 CAN_device_t CAN_cfg;
 
@@ -71,13 +76,319 @@ float bytesToFloatExt(byte *byteArray) {
   return converter.floatValue;  // Retorna o valor original
 }
 
+void trataFrame(CAN_frame_t *frame) {
+  // Variaveis e vetores auxiliares
+  int8_t compactedAcel[2];
+  float dado = 0.0;
+  float dadoX = 0.0;
+  float dadoY = 0.0;
+  float dadoZ = 0.0;
+  float dadoExt = 0.0;
+  byte bytesExt[sizeof(float)];
+  byte compactedTemp[2];
+
+  // Testa o ID da mensagem e chama a funcao de tratamento de acordo com o tipo de dado
+  switch (frame->MsgID) {
+
+    case 0x301:  // Dado de acelerometro
+      for (int i = 0; i < 8; i++) {
+        if (i >= 1 && i % 2 != 0 && i < 7) {  // So descompacta se for um indice impar >=1
+          compactedAcel[0] = frame->data.u8[i];
+          compactedAcel[1] = frame->data.u8[i + 1];
+          dado = desCompactAcel(compactedAcel);
+          if (i == 1) {
+            dadoX = dado;
+          }
+          if (i == 3) {
+            dadoY = dado;
+          }
+          if (i == 5) {
+            dadoZ = dado;
+          }
+        }
+      }
+      switch (frame->data.u8[0]) {
+        case 0x1:
+          Serial.println("Dado Aceleracao 1");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Acel1.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x2:
+          Serial.println("Dado Aceleracao 2");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Acel2.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x3:
+          Serial.println("Dado Vel. Ang. 1");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Acel1.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.println(millis());
+          root1.close();
+          break;
+        case 0x4:
+          Serial.println("Dado Vel. Ang. 2");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Acel2.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.println(millis());
+          root1.close();
+          break;
+        default:
+          Serial.println();
+      }
+      break;
+
+    case 0x302:  // Dado de extensometria dianteira 1
+      bytesExt[0] = frame->data.u8[1];
+      bytesExt[1] = frame->data.u8[2];
+      bytesExt[2] = frame->data.u8[3];
+      bytesExt[3] = frame->data.u8[4];
+      dadoExt = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
+      switch (frame->data.u8[0]) {
+        case 0x1:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD1.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x2:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD1.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x3:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD1.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x4:
+          Serial.println(dadoExt);
+          root1 = SD.open("ExtD1.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.println(millis());
+          root1.close();
+          break;
+        default:
+          Serial.println();
+      }
+      break;
+
+    case 0x303:  // Dado de extensometria dianteira 2
+      bytesExt[0] = frame->data.u8[1];
+      bytesExt[1] = frame->data.u8[2];
+      bytesExt[2] = frame->data.u8[3];
+      bytesExt[3] = frame->data.u8[4];
+      dadoExt = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
+      switch (frame->data.u8[0]) {
+        case 0x1:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD2.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x2:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD2.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x3:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtD2.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x4:
+          Serial.println(dadoExt);
+          root1 = SD.open("ExtD2.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.println(millis());
+          root1.close();
+          break;
+        default:
+          Serial.println();
+      }
+      break;
+
+    case 0x304:  // Dado de extensometria traseira
+      bytesExt[0] = frame->data.u8[1];
+      bytesExt[1] = frame->data.u8[2];
+      bytesExt[2] = frame->data.u8[3];
+      bytesExt[3] = frame->data.u8[4];
+      dadoExt = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
+      switch (frame->data.u8[0]) {
+        case 0x1:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtT.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x2:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtT.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x3:
+          Serial.print(dadoExt);
+          Serial.print("\t");
+          root1 = SD.open("ExtT.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x4:
+          Serial.println(dadoExt);
+          root1 = SD.open("ExtT.txt", FILE_WRITE);
+          root1.print(dadoExt);
+          root1.println(millis());
+          root1.close();
+          break;
+        default:
+          Serial.println();
+      }
+      break;
+
+    case 0x305:  // Dado de temperatura
+      for (int i = 0; i < 8; i++) {
+        if (i >= 1 && i % 2 != 0 && i < 7) {  // So descompacta se for um indice impar >=1
+          compactedTemp[0] = frame->data.u8[i];
+          compactedTemp[1] = frame->data.u8[i + 1];
+          dado = desCompactTemp(compactedTemp);
+          if (i == 1) {
+            dadoX = dado;
+          }
+          if (i == 3) {
+            dadoY = dado;
+          }
+          if (i == 5) {
+            dadoZ = dado;
+          }
+        }
+      }
+      switch (frame->data.u8[0]) {
+        case 0x1:
+          Serial.println("Dado Temp 1, 2, 3");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Temp.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.close();
+          break;
+        case 0x2:
+          Serial.println("Dado Temp 4, 5, 6");
+          Serial.print(dadoX);
+          Serial.print("\t");
+          Serial.print(dadoY);
+          Serial.print("\t");
+          Serial.println(dadoZ);
+          root1 = SD.open("Temp.txt", FILE_WRITE);
+          root1.print(dadoX);
+          root1.print("\t");
+          root1.print(dadoY);
+          root1.print("\t");
+          root1.print(dadoZ);
+          root1.print("\t");
+          root1.println(millis());
+          root1.close();
+          break;
+        default:
+          Serial.println();
+      }
+      break;
+    default:
+      Serial.println();
+  }
+}
+
 /*
   Nome: setup
-  Descricao: Incializa o modulo CAN, e seta os parametros necessarios para a transmissao
+  Descricao: Incializa o modulo CAN e SD e seta os parametros necessarios para a transmissao
 */
 
 void setup() {
   Serial.begin(115200);
+
+  /* initialize SD library with SPI pins */
+  if (!SD.begin(15, 23, 19, 18)) {
+    SD.begin(15, 23, 19, 18);
+    Serial.println("initialization failed!");
+    //return;
+  }
+  Serial.println("initialization done.");
+  root1 = SD.open("/");
+  if (root1) {
+    root1.close();
+  } else {
+    Serial.println("error opening .txt");
+  }
 
   /* Configura a taxa de transmissão e os pinos Tx e Rx */
   CAN_cfg.speed = CAN_SPEED_1000KBPS;
@@ -97,89 +408,26 @@ void setup() {
 */
 
 void loop() {
+  root1.close();
+  // Criacao do arquivo
+  root1 = SD.open("ExtDiant1.txt", FILE_WRITE);
+
   /* Declaração dos pacotes CAN */
   CAN_frame_t frame_1;
-
-  // Variaveis e vetores auxiliares
-  int8_t compactedAcel[2];
-  float dado = 0.0;
-  float dadoX, dadoY, dadoZ;
-  byte bytesExt[sizeof(float)];
-  byte compactedTemp[2];
+  CAN_frame_t frame_2;
+  CAN_frame_t frame_3;
+  CAN_frame_t frame_4;
 
   /* Recebe o primeiro pacote CAN na fila */
   if (xQueueReceive(CAN_cfg.rx_queue, &frame_1, 3 * portTICK_PERIOD_MS) == pdTRUE) {
-
-    // Testa o ID da mensagem e chama a funcao de tratamento de acordo com o tipo de dado
-    switch (frame_1.MsgID) {
-      case 0x301:  // Dado de acelerometro
-        for (int i = 0; i < 8; i++) {
-          if (i >= 1 && i % 2 != 0 && i < 7) {          // So descompacta se for um indice impar >=1
-            compactedAcel[0] = frame_1.data.u8[i];
-            compactedAcel[1] = frame_1.data.u8[i + 1];
-            dado = desCompactAcel(compactedAcel);
-            if (i == 1) {
-              dadoX = dado;
-            }
-            if (i == 3) {
-              dadoY = dado;
-            }
-            if (i == 5) {
-              dadoZ = dado;
-            }
-          }
-        }
-        break;
-
-      case 0x302:  // Dado de extensometria
-        bytesExt[0] = frame_1.data.u8[1];
-        bytesExt[1] = frame_1.data.u8[2];
-        bytesExt[2] = frame_1.data.u8[3];
-        bytesExt[3] = frame_1.data.u8[4];
-        dadoX = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
-        break;
-
-      case 0x303:  // Dado de extensometria
-        bytesExt[0] = frame_1.data.u8[1];
-        bytesExt[1] = frame_1.data.u8[2];
-        bytesExt[2] = frame_1.data.u8[3];
-        bytesExt[3] = frame_1.data.u8[4];
-        dadoX = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
-        break;
-
-      case 0x304:  // Dado de extensometria
-        bytesExt[0] = frame_1.data.u8[1];
-        bytesExt[1] = frame_1.data.u8[2];
-        bytesExt[2] = frame_1.data.u8[3];
-        bytesExt[3] = frame_1.data.u8[4];
-        dadoX = bytesToFloatExt(bytesExt);  // Chama a funcao para converter
-        break;
-
-      case 0x305:  // Dado de temperatura
-        for (int i = 0; i < 8; i++) {
-          if (i >= 1 && i % 2 != 0 && i < 7) {  // So descompacta se for um indice impar >=1
-            compactedTemp[0] = frame_1.data.u8[i];
-            compactedTemp[1] = frame_1.data.u8[i + 1];
-            dado = desCompactTemp(compactedTemp);
-            if (i == 1) {
-              dadoX = dado;
-            }
-            if (i == 3) {
-              dadoY = dado;
-            }
-            if (i == 5) {
-              dadoZ = dado;
-            }
-          }
-        }
-        break;
-      default:
-        Serial.println();
-    }
-    Serial.print(dadoX);
-    Serial.print("\t");
-    Serial.print(dadoY);
-    Serial.print("\t");
-    Serial.println(dadoZ);
+    trataFrame(&frame_1);
+  } else if (xQueueReceive(CAN_cfg.rx_queue, &frame_2, 3 * portTICK_PERIOD_MS) == pdTRUE) {
+    trataFrame(&frame_2);
+  } else if (xQueueReceive(CAN_cfg.rx_queue, &frame_3, 3 * portTICK_PERIOD_MS) == pdTRUE) {
+    trataFrame(&frame_3);
+  } else if (xQueueReceive(CAN_cfg.rx_queue, &frame_4, 3 * portTICK_PERIOD_MS) == pdTRUE) {
+    trataFrame(&frame_4);
   }
+
+  delay(100);
 }
